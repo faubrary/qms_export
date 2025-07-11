@@ -33,11 +33,22 @@ testComplexLastName
 	D assertEquals^Assert("Lloyd-George",pat("lastname"))
 	Q
 testIsValid
-	N pat
+	N pat,cfg
+	S cfg("f",1,"ref")="pB"
+	S cfg("f",1,"fname")="hisnumber"
+	S cfg("f",1,"required")="true"
+	S cfg("f",5,"ref")="pI"
+	S cfg("f",5,"fname")="birthdate"
+	S cfg("f",5,"required")="true"
+	S cfg("f",9,"ref")="email"
+	S cfg("f",9,"fname")="email"
 	S pat("hisnumber")="1/A25"
 	D assertEquals^Assert(0,$$isValid^ExportPatients(.cfg,.pat))
-	S pat("lastname")="Churchill"
-	D isValid^ExportPatients(.pat)
+	S pat("birthdate")=""
+	D assertEquals^Assert(0,$$isValid^ExportPatients(.cfg,.pat))
+	S pat("email")="example@yandex.ru"
+	D assertEquals^Assert(0,$$isValid^ExportPatients(.cfg,.pat))
+	S pat("birthdate")="19941015"
 	D assertEquals^Assert(1,$$isValid^ExportPatients(.cfg,.pat))
 	Q
 testLongIdNa
@@ -69,7 +80,7 @@ testDocNumber
 	Q
 testEmail
 	N q,pat
-	S q(1,153,"оAAAAAC","email")="KUbD assertEquals^Assert(1,result)"
+	S q(1,153,"оAAAAAC","email")="KUb"
 	S q(1,"Cemail","KUb")="user@yandex.ru"
 	D setRef^ExportPatients(.cfg,.pat,9,$na(q(1,153,"оAAAAAD")))
 	D assertEquals^Assert(0,$D(pat("email")))
@@ -87,49 +98,56 @@ testPhone
 	Q
 testLogin
 	N q,pat
-	S q(1,2533,"оAAAAACAAA","soglNum")="aaa"
-	S q(1,2533,"оAAAAACAAA","Msogl")="case1@yandex.ru"
-	S q(1,2533,"оAAAAACAAA","Xd")="dd"
-	S q(1,2533,"оAAAAACAAB","soglNum")="F"
-	S q(1,2533,"оAAAAACAAB","Msogl")="case2@yandex.ru"
-	S q(1,2533,"оAAAAACAAB","Xd")=""
-	S q(1,2533,"оAAAAACAAC","soglNum")="bb"
-	S q(1,2533,"оAAAAACAAC","Msogl")="case3@yandex.ru"
-	S q(1,2533,"оAAAAACAAC","Xd")=""
-	S q(1,2533,"оAAAAACAAD","soglNum")="F"
-	S q(1,2533,"оAAAAACAAD","Msogl")="case4@yandex.ru"
-	S q(1,2533,"оAAAAACAAD","Xd")="dd"
-	D setLongRefWithCondition^ExportPatients(.cfg,.pat,11,$na(q(1,153,"оAAAAAD")))
+	S q(1,2533,"oAAAAACAAAA","soglNum")="aaa"
+	S q(1,2533,"oAAAAACAAAA","Msogl")="case1@yandex.ru"
+	S q(1,2533,"oAAAAACAAAA","Xd")="dd"
+	S q(1,2533,"oAAAAACAAAB","soglNum")="F"
+	S q(1,2533,"oAAAAACAAAB","Msogl")="case2@yandex.ru"
+	S q(1,2533,"oAAAAACAAAB","Xd")=""
+	S q(1,2533,"oAAAAACAAAC","soglNum")="bb"
+	S q(1,2533,"oAAAAACAAAC","Msogl")="case3@yandex.ru"
+	S q(1,2533,"oAAAAACAAAC","Xd")=""
+	S q(1,2533,"oAAAAACAAAD","soglNum")="F"
+	S q(1,2533,"oAAAAACAAAD","Msogl")="case4@yandex.ru"
+	S q(1,2533,"oAAAAACAAAD","Xd")="ddsdfsdf"
+	D setLongRefWithCondition^ExportPatients(.cfg,.pat,11,$na(q(1,153,"oAAAAAD")))
 	D assertEquals^Assert(0,$D(pat("login")))
-	D setLongRefWithCondition^ExportPatients(.cfg,.pat,11,$na(q(1,153,"оAAAAAC")))
+	D setLongRefWithCondition^ExportPatients(.cfg,.pat,11,$na(q(1,153,"oAAAAAC")))
 	D assertEquals^Assert("case4@yandex.ru",pat("login"))
 	;
 testCheckAllConditions
-	; test to return 1
-	N q,cfg,result
-	S cfg("f",1,"condition",1,"fcond")="true"
-	S cfg("f",1,"condition",1,"condfield")="testfield1"
-	S cfg("f",1,"condition",1,"matches")="true"
-	S cfg("f",1,"condition",2,"fcond")="false"
-	S cfg("f",1,"condition",2,"condfield")="testfield2"
-	S q("testfield1")="true"
-	S q("testfield2")="true"
-	S result=$$checkAllConditions^ExportPatients($na(cfg("f",1,"condition")),$na(q))
+	N q,cfg,result,condNa,dataNa
+	S cfg("f",1,"condition",1,"condfield")="field1"
+	S cfg("f",1,"condition",1,"predicate")="@condfieldNa=11"
+	S cfg("f",1,"condition",2,"condfield")="field2"
+	S cfg("f",1,"condition",2,"predicate")="@condfieldNa'=""h8"""
+	S condNa=$na(cfg("f",1,"condition"))
+	S dataNa=$na(q)
+	;
+	S q("field1")=11
+	S q("field2")="a1"
+	S result=$$checkAllConditions^ExportPatients(condNa,dataNa)
 	D assertEquals^Assert(1,result)
-	;	
-	; test to return 0
-	S q("testfield1")="false"
-	S result=$$checkAllConditions^ExportPatients($na(cfg("f",1,"condition")),$na(q))
+	;  
+	S q("field1")=22
+	S q("field2")="h8"
+	S result=$$checkAllConditions^ExportPatients(condNa,dataNa)
 	D assertEquals^Assert(0,result)
-	;	
-	; test to return 0 by condition #1
-	S q("testfield1")="false"
-	S q("testfield2")="true"
-	S result=$$checkAllConditions^ExportPatients($na(cfg("f",1,"condition")),$na(q))
+	;  
+	S q("field1")=22
+	S q("field2")="h7"
+	S result=$$checkAllConditions^ExportPatients(condNa,dataNa)
 	D assertEquals^Assert(0,result)
-	;	
-	; test to return 0 by condition #2
-	S q("testfield1")="true"
-	S q("testfield2")="false"
-	S result=$$checkAllConditions^ExportPatients($na(cfg("f",1,"condition")),$na(q))
+	;  
+	S q("field1")=11
+	S q("field2")="h8"
+	S result=$$checkAllConditions^ExportPatients(condNa,dataNa)
 	D assertEquals^Assert(0,result)
+	;  
+	S cfg("f",1,"condition",2,"predicate")="$D(@condfieldNa)=0"
+	S q("field1")=11
+	K q("field2")
+	S result=$$checkAllConditions^ExportPatients(condNa,dataNa)
+	D assertEquals^Assert(1,result)
+	Q
+	;

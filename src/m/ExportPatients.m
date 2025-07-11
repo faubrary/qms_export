@@ -58,17 +58,15 @@ config(cfg)
 	S cfg("f",11,"fname")="login"
 	S cfg("f",11,"method")="setLongRefWithCondition"
 	S cfg("f",11,"entity")=2533
-	S cfg("f",11,"condition",1,"fcond")="F"
 	S cfg("f",11,"condition",1,"condfield")="soglNum"
-	S cfg("f",11,"condition",1,"matches")="true"
-	S cfg("f",11,"condition",2,"fcond")="dd"
+	S cfg("f",11,"condition",1,"predicate")="@condfieldNa=""F"""
 	S cfg("f",11,"condition",2,"condfield")="Xd"
-	S cfg("f",11,"condition",2,"matches")="true"
+	S cfg("f",11,"condition",2,"predicate")="$F($E(@condfieldNa,1,3),""d"")'=0"
 	;
 	S cfg("refId","delim")=" "
 	S cfg("refId","subst")=cfg("refId","delim")
 	Q
-setRef(cfg,pat,fn,idNa) ; fn=2 idNa=$na(^Q(1,153,"оAAAAAC")
+setRef(cfg,pat,fn,idNa) ; fn=2 idNa=$na(^Q(1,153,"оAAAAAC"))
 	N fname,ref,refId,refNa,refValue,refIdDelim,refIdSubst
 	N p,lp
 	S fname=cfg("f",fn,"fname") ; lastname
@@ -111,43 +109,35 @@ setLongRef(cfg,pat,fn,idNa)
 	S:refValue'="" pat(fname)=refValue
 	Q
 setLongRefWithCondition(cfg,pat,fn,idNa)
-	N entity,longIdNa,ref,refValue,fname,p,end,baseNa,conditionPath
+	N entity,ref,refValue,fname,p,baseNa,conditionPath,lengthId,id
 	S entity=cfg("f",fn,"entity")
-	S longIdNa=$$longIdNaForward(cfg("$na"),entity,idNa)
-	Q:longIdNa=""
 	S fname=cfg("f",fn,"fname") ; login
 	S ref=cfg("f",fn,"ref") ; Msogl
-	S end=$E($QS(longIdNa,3),1,8) ; оAAAAAC: end here, do not go forward to оAAAAAD
+	S id=$QS(idNa,$QL(idNa)) ; current id, оAAAAAC: end inside this node, do not go forward to оAAAAAD
+	S lengthId=$L(id)
 	S baseNa=$na(@cfg("$na")@(entity)) ; ^Q(1,2533)
-	S conditionPath=$na(cfg("f",fn,"condition"))
-	S p=$QS(longIdNa,3)
-	F  S p=$O(@baseNa@(p)) Q:p=""  Q:$E(p,1,8)'=end  D
+	S conditionPath=$na(cfg("f",fn,"condition")) ; cfg("f",fn,"condition"): to pass to checkAllConditions
+	S p=id F  S p=$O(@baseNa@(p)) Q:p=""  Q:$E(p,1,lengthId)'=id  D
 	. I $$checkAllConditions(conditionPath,$na(@baseNa@(p))) D
 	. . S refValue=$G(@baseNa@(p,ref))
 	. . I refValue'="" S pat(fname)=refValue Q
 	Q
-checkAllConditions(conditionPath,recordNa)
-	N condNum,condfield,fcond,actualValue,shouldMatch,allConditionsMet
-	S allConditionsMet=1
-	S condNum="" F  S condNum=$O(@conditionPath@(condNum)) Q:condNum=""  Q:'allConditionsMet  D
-	. S condfield=@conditionPath@(condNum,"condfield")
-	. S fcond=@conditionPath@(condNum,"fcond")
-	. S actualValue=$G(@recordNa@(condfield))
-	. S shouldMatch=$D(@conditionPath@(condNum,"matches"))
-	. I shouldMatch,(actualValue'=fcond) S allConditionsMet=0 Q
-	. I 'shouldMatch,(actualValue=fcond) S allConditionsMet=0 Q
-	Q allConditionsMet
-longIdNaForward(startNa,nextInd,idNa)
-	N id,longId
-	S id=$QS(idNa,$QL(idNa))
-	S longId=$O(@startNa@(nextInd,id_$c(0,0,0,0,0))) ; ^Q(1,2533,"оAAAAACAAAAA")
-	I id]]longId Q ""
-	Q $na(@startNa@(nextInd,longId))
+checkAllConditions(condPath,recordNa)
+	N condNum,condfieldNa,predicate,result
+	S result=1
+	S condNum="" F  S condNum=$O(@condPath@(condNum)) Q:condNum=""  D  Q:'result
+	. S condfieldNa=$NA(@recordNa@(@condPath@(condNum,"condfield"))) ; ^Q(1,2533,longId,"condfield")
+	. S predicate=@condPath@(condNum,"predicate")
+	. I @predicate Q
+	. E  S result=0 Q
+	Q result
+	; . I pat("hisnumber")="7/A21" B ; for debug purposes, put it before I @predicate line
 longIdNa(startNa,nextInd,idNa)
-	N id,longId
+	N id,longId,lengthId
 	S id=$QS(idNa,$QL(idNa))
+	S lengthId=$L(id)
 	S longId=$O(@startNa@(nextInd,id_$c(255,255,255,255,255)),-1)
-	I id]]longId Q ""
+	I id]]longId,$E(longId,1,lengthId)'=id Q ""
 	Q $na(@startNa@(nextInd,longId))
 processPatient(cfg,stat,patNa,id)
 	N fn,pat,idNa,method,isValid
@@ -163,7 +153,7 @@ processPatient(cfg,stat,patNa,id)
 isValid(cfg,pat)
 	N fn,result
 	S result=1
-	S fn="" F  S fn=$O(cfg("f",fn)) Q:fn=""  D
+	S fn="" F  S fn=$O(cfg("f",fn)) Q:fn=""  D  Q:'result
 	. I $D(cfg("f",fn,"required")),$G(pat(cfg("f",fn,"fname")))="" S result=0 Q
 	Q result
 writePatient(cfg,pat)
