@@ -131,7 +131,7 @@ checkAllConditions(condPath,recordNa)
 	. I @predicate Q
 	. E  S result=0 Q
 	Q result
-	; . I pat("hisnumber")="7/A21" B ; for debug purposes, put it before I @predicate line
+	; . I @idNa@"pB"="7/A21" B ; for debug purposes, put it before I @predicate line
 longIdNa(startNa,nextInd,idNa)
 	N id,longId,lengthId
 	S id=$QS(idNa,$QL(idNa))

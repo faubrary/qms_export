@@ -1,0 +1,13 @@
+05\67388,60539\97962210721\1466692\0\0\0\0\0\0\^Q(1,294,"оAAAKЮХAASAFs16:47A&AY","W")="Ts CЯY бs Ec Tu CMdh бs AпB pI жP гWЖ AеZ Ed BwU Cйi Tu CMdi бs CЬ AеZ Tx CMdi Aъu AшX Aъy Ea Aъw бs Bv Aеc IDФ CKvO BwU Cйi Tu CMdj бs CЫ AеZ Tx CMdj Aъu AшX Aъy Ea Aъw бs AbЭ Aеc IDФ CKvO BwU Cйi Tu CMdk бs CZ AеZ Tx CMdk Aъu CKvR Aъw бs Ea GyН Aеc BwU Cйi Tu CMdl бs ДЮ AеZ Tx CMdl бs AZТ AWw Aеc TВ"
+w ^Q(1,"CW","Ts")
+<w
+lookdown:
+S a="" F  S a=$O(^Q(1,"CW",a)) Q:a=""  W !,a,"=",$G(^Q(1,"CW",a))
+
+cfg for adding:
+
+S cfg("f",12,"ref")="W"
+S cfg("f",12,"fname")="history"
+S cfg("f",12,"method")="setLongRefWithCondition"
+S cfg("f",12,"entity")=294
+S cfg("f",12,"glossary")="true"
