@@ -137,7 +137,7 @@ longIdNa(startNa,nextInd,idNa)
 	S id=$QS(idNa,$QL(idNa))
 	S lengthId=$L(id)
 	S longId=$O(@startNa@(nextInd,id_$c(255,255,255,255,255)),-1)
-	I id]]longId,$E(longId,1,lengthId)'=id Q ""
+	I $E(longId,1,lengthId)'=id Q ""
 	Q $na(@startNa@(nextInd,longId))
 processPatient(cfg,stat,patNa,id)
 	N fn,pat,idNa,method,isValid

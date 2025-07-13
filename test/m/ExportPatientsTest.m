@@ -37,19 +37,21 @@ testIsValid
 	S cfg("f",1,"ref")="pB"
 	S cfg("f",1,"fname")="hisnumber"
 	S cfg("f",1,"required")="true"
+	S cfg("f",3,"ref")="pG"
+	S cfg("f",3,"fname")="name"
 	S cfg("f",5,"ref")="pI"
 	S cfg("f",5,"fname")="birthdate"
 	S cfg("f",5,"required")="true"
-	S cfg("f",9,"ref")="email"
-	S cfg("f",9,"fname")="email"
 	S pat("hisnumber")="1/A25"
 	D assertEquals^Assert(0,$$isValid^ExportPatients(.cfg,.pat))
 	S pat("birthdate")=""
 	D assertEquals^Assert(0,$$isValid^ExportPatients(.cfg,.pat))
-	S pat("email")="example@yandex.ru"
+	S pat("name")="Patrick"
 	D assertEquals^Assert(0,$$isValid^ExportPatients(.cfg,.pat))
 	S pat("birthdate")="19941015"
 	D assertEquals^Assert(1,$$isValid^ExportPatients(.cfg,.pat))
+	K pat("hisnumber")
+	D assertEquals^Assert(0,$$isValid^ExportPatients(.cfg,.pat))
 	Q
 testLongIdNa
 	N q,longIdNa1,longIdNa2
@@ -110,10 +112,13 @@ testLogin
 	S q(1,2533,"oAAAAACAAAD","soglNum")="F"
 	S q(1,2533,"oAAAAACAAAD","Msogl")="case4@yandex.ru"
 	S q(1,2533,"oAAAAACAAAD","Xd")="ddsdfsdf"
+	S q(1,2533,"oAAAAACAAAE","soglNum")="F"
+	S q(1,2533,"oAAAAACAAAE","Msogl")="case5@yandex.ru"
+	S q(1,2533,"oAAAAACAAAE","Xd")="iid"
 	D setLongRefWithCondition^ExportPatients(.cfg,.pat,11,$na(q(1,153,"oAAAAAD")))
 	D assertEquals^Assert(0,$D(pat("login")))
 	D setLongRefWithCondition^ExportPatients(.cfg,.pat,11,$na(q(1,153,"oAAAAAC")))
-	D assertEquals^Assert("case4@yandex.ru",pat("login"))
+	D assertEquals^Assert("case5@yandex.ru",pat("login"))
 	;
 testCheckAllConditions
 	N q,cfg,result,condNa,dataNa
