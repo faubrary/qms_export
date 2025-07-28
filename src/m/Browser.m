@@ -29,11 +29,7 @@ main(hisnumber,entity)
 searchByHisnumber(hisnumber,glNa,patObj)
 	N ref,reverseNa,result
 	S ref="pB"
-	; S reverseNa=$na(@glNa@(ref@(hisnumber@(patObj))),"")
-	S reverseNa=$na(@glNa@(ref))
-	S reverseNa=$na(@reverseNa@(hisnumber))
-	S reverseNa=$na(@reverseNa@(patObj))
-	S reverseNa=$na(@reverseNa," ") ; тут проблема в общем
+	S reverseNa=$na(@glNa@(ref,hisnumber,patObj,""))
 	S result=$O(@reverseNa)
 	Q result
 	;
@@ -47,3 +43,5 @@ decodeValuesByGlossary(ref,fieldValue,glNa,idNa)
 	S fieldValueLength=$L(fieldValue,delimiter)
 	F l=1:1:fieldValueLength S $P(refValue,delimiter,l)=@glossaryNa@($P(fieldValue,delimiter,l))
 	w refValue,!
+	Q
+	;
