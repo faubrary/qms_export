@@ -6,7 +6,7 @@ usage
 	Q
 main(qqc)
 	N pBref,pB
-	S pBref=$G(^Q(1,153,qqc))
+	S pBref=$G(^Q(1,153,qqc,"pB"))
 	S pB=$G(^Q(1,"CpB",pBref))
 	W pB,!
 	Q
