@@ -5,4 +5,5 @@ usage
 	W " export to current device: d main(""email"")^"_$ZSOURCE,!
 	Q
 main(email)
-	w ^FeSAEMP(email)
+	W ^FeSAEMP(email)
+	Q
