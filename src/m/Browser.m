@@ -24,6 +24,7 @@ main(hisnumber,entity)
 	S ref="" F  S ref=$O(@idNa@(ref)) Q:ref=""  D ; iterate over next level of subnodes
 	. S fieldValue=$G(@idNa@(ref))
 	. I $D(fieldValue)=0 Q
+	. w ref,fieldValue,glNa,idNa
 	. D decodeValuesByGlossary(ref,fieldValue,glNa,idNa)
 	;	
 searchByHisnumber(hisnumber,glNa,patObj)
