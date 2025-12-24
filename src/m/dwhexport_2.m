@@ -152,52 +152,65 @@ testupload(tablename,filialName,outBase)
 	F k=1:1:500 S id=$O(@outBase@(tablename,filialName,id)) Q:id=""  D processRow(.tablename,id,.cfg,.filialName)
 	Q
 treatscheduleconfig(cfg)
-	S cfg("$na")=$na(^QNaz(5))
+	S cfg("$na")=$na(^Q(1))
 	S cfg("$out")=$na(^usrextensionbi)
-	S cfg("entity","pat")="244"
+	S cfg("entity","pat")="1860"
 	S cfg("scope")="byFilial"
+	S cfg("customParser")="parseTreatSchedule"
 	;
 	S cfg("f",1,"ref")="id"
 	S cfg("f",1,"fname")="treat_schedule_id"
-	S cfg("f",1,"method")="extractRef"
-	S cfg("f",1,"startpos")=1
-	S cfg("f",1,"endpos")=11
 	;
-	S cfg("f",2,"ref")=" "
+	S cfg("f",2,"ref")="datAF"
 	S cfg("f",2,"fname")="treat_schedule_date"
 	;
-	S cfg("f",3,"ref")=" "
+	S cfg("f",3,"ref")="Ytr"
 	S cfg("f",3,"fname")="treat_schedule_slot_start_time"
+	S cfg("f",3,"required")="true"
 	;
-	S cfg("f",4,"ref")=" "
+	S cfg("f",4,"ref")="Ytr"
 	S cfg("f",4,"fname")="treat_schedule_slot_end_time"
+	S cfg("f",4,"required")="true"
 	;
 	S cfg("f",5,"ref")=" "
 	S cfg("f",5,"fname")="treat_schedule_type"
+	S cfg("f",5,"method")="null"
 	;
 	S cfg("f",6,"ref")=" "
 	S cfg("f",6,"fname")="payment_mode_id"
+	S cfg("f",6,"method")="null"
 	;
-	S cfg("f",7,"ref")=" "
+	S cfg("f",7,"ref")="id"
 	S cfg("f",7,"fname")="patient_id"
+	S cfg("f",7,"method")="extractRef"
+	S cfg("f",7,"startpos")=1
+	S cfg("f",7,"endpos")=7
 	;
-	S cfg("f",8,"ref")=" "
+	S cfg("f",8,"ref")="id"
 	S cfg("f",8,"fname")="filial_id"
+	S cfg("f",8,"method")="extractRef"
+	S cfg("f",8,"startpos")=1
+	S cfg("f",8,"endpos")=4
 	;
 	S cfg("f",9,"ref")=" "
 	S cfg("f",9,"fname")="division_id"
+	S cfg("f",9,"method")="null"
 	;
 	S cfg("f",10,"ref")=" "
 	S cfg("f",10,"fname")="department_id"
+	S cfg("f",10,"method")="null"
 	;
 	S cfg("f",11,"ref")=" "
 	S cfg("f",11,"fname")="operation_room_id"
+	S cfg("f",11,"method")="null"
 	;
 	S cfg("f",12,"ref")=" "
 	S cfg("f",12,"fname")="room_id"
+	S cfg("f",12,"method")="null"
 	;
 	S cfg("f",13,"ref")=" "
 	S cfg("f",13,"fname")="workplace_id"
+	S cfg("f",13,"method")="null"
 	;
 	S cfg("f",14,"ref")=" "
 	S cfg("f",14,"fname")="doctor_id"
@@ -1164,6 +1177,58 @@ parseDepartments(cfg,stat,entityNa,tablename,filialName,filialId,scope)
 	S deptId=""
 	F  S deptId=$O(usedDept(deptId)) Q:deptId=""  D
 	. D writeToGlobal(.cfg,.stat,entityNa,deptId,.tablename,.filialName)
+	Q
+parseTreatSchedule(cfg,stat,entityNa,tablename,filialName,filialId,scope)
+	; Parses ^QNaz(5,doctor_id,date,slot,0,service_id) linkages to build treat schedule records
+	; Structure: ^QNaz(5,doctor_id,date,slot,0,service_id)="1"
+	N doctorId,date,slot,serviceId,serviceNa,pat,isValid,recordId,outBase
+	S outBase=$G(cfg("$out"),$na(^usrextensionbi))
+	S doctorId=""
+	F  S doctorId=$O(^QNaz(5,doctorId)) Q:doctorId=""  D
+	. I scope="byFilial",filialId'="",$E(doctorId,1,3)'=filialId Q
+	. S date=""
+	. F  S date=$O(^QNaz(5,doctorId,date)) Q:date=""  D
+	. . S slot=""
+	. . F  S slot=$O(^QNaz(5,doctorId,date,slot)) Q:slot=""  D
+	. . . S serviceId=""
+	. . . F  S serviceId=$O(^QNaz(5,doctorId,date,slot,0,serviceId)) Q:serviceId=""  D
+	. . . . S serviceNa=$na(@entityNa@(serviceId))
+	. . . . I '$D(@serviceNa) Q  ; service record doesn't exist
+	. . . . K pat
+	. . . . D buildTreatSchedulePat(.cfg,.pat,serviceNa,serviceId,doctorId,date,slot)
+	. . . . S isValid=$$isValid(.cfg,.pat)
+	. . . . ; additional validation: slot times must be different
+	. . . . I isValid,$G(pat("treat_schedule_slot_start_time"))=$G(pat("treat_schedule_slot_end_time")) S isValid=0
+	. . . . I $I(stat("isValid",isValid))
+	. . . . Q:'isValid
+	. . . . S recordId=serviceId_"|"_doctorId
+	. . . . M @outBase@(tablename,filialName,recordId)=pat
+	Q
+buildTreatSchedulePat(cfg,pat,serviceNa,serviceId,doctorId,date,slot)
+	; Builds pat array for treat schedule from service record and QNaz linkage
+	N fn,method,startTime,endTime,dateCode,dateValue
+	; treat_schedule_id: concatenation of service_id and doctor_id
+	S pat("treat_schedule_id")=serviceId_doctorId
+	; treat_schedule_date: from date parameter (already numeric YYYYMMDD)
+	S pat("treat_schedule_date")=date
+	; treat_schedule_slot_start_time and end_time: parse slot "HH:MM-HH:MM"
+	S startTime=$P(slot,"-",1)
+	S endTime=$P(slot,"-",2)
+	I startTime="" S startTime=slot
+	I endTime="" S endTime=startTime
+	S pat("treat_schedule_slot_start_time")=startTime
+	S pat("treat_schedule_slot_end_time")=endTime
+	; patient_id: positions 1-7 from service_id
+	S pat("patient_id")=$E(serviceId,1,7)
+	; filial_id: positions 1-4 from service_id
+	S pat("filial_id")=$E(serviceId,1,4)
+	; doctor_id: from QNaz linkage
+	S pat("doctor_id")=doctorId
+	; other fields via standard methods
+	S fn="" F  S fn=$O(cfg("f",fn)) Q:fn=""  D
+	. I $D(pat(cfg("f",fn,"fname"))) Q  ; already set above
+	. S method=$G(cfg("f",fn,"method"),"setRef")
+	. D @(method_"(.cfg,.pat,fn,serviceNa)")
 	Q
 buildScheduleStaticPat(cfg,basePat,idNa)
 	; Builds part of pat that is the same for every slot within idNa
